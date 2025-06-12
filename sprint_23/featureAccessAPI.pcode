@@ -1,0 +1,72 @@
+Assign Assessment & ATS Subscription API
+Existing API Endpoint
+POST https://api-admin.dev.pluginlive.com/assessment/assignSubscription
+
+Old Payload Example (Assessment Subscription Only)
+
+{
+  "entityId": "fe539d1e-c866-4f35-be99-2de680d8dae6",  // institute_id
+  "assessmentTypes": [
+    "Cognitive", "Communication", "Tech_MCQ", "Tech_CODING", "Behavior"
+  ],
+  "entityType": "college",
+  "practiceDegreeSets": [
+    {
+      "assessmentType": "Aptitude",
+      "degreeList": [
+        { "degreeId": "...", "streamId": "...", "specialisation": ["..."] },
+        { "degreeId": "...", "isDegreeOnly": true },
+        { "degreeType": "...", "isAllDegree": true }
+      ]
+    }
+  ]
+}
+
+New Payload (Assessment + ATS Subscription)
+
+{
+  "entityId": "fe539d1e-c866-4f35-be99-2de680d8dae6",
+  "entityType": "college",
+  "accessLevel": 3,  // 0: No Access, 1: ATS, 2: Assessment, 3: Both
+  "practiceDegreeSets": [
+    {
+      "assessmentType": "Aptitude",
+      "degreeList": [
+        { "degreeId": "...", "streamId": "...", "specialisation": ["..."] },
+        { "degreeId": "...", "isDegreeOnly": true },
+        { "degreeType": "...", "isAllDegree": true }
+      ]
+    }
+  ]
+}
+
+Process Flow
+
+Step 1 – Validate Required Payloads
+    Check if entityId is present
+        → If not, return: "entityId is required"
+
+Validate accessLevel
+    → If not in range 0–3, return: "Enter a valid accessLevel"
+    
+Step 2 – Validate Entity
+    If entityType is college:
+        → Fetch instituteData using entityId
+        → Set entityName = campus_name
+
+    If entityType is corporate:
+        → Fetch corporateData using entityId
+        → Set entityName = corporate_name
+
+    If entityName is not found
+        → Return: "Entity not found"
+
+Step 3 – Assign Subscription
+    If entityType is college
+        → Call institute service API to create or update subscription
+        → Payload: { instituteCampusId, accessLevel, practiceDegreeSets }
+        → If API fails, return error
+
+Step 4 – Return Response
+    On success, return the success response with assigned subscription details.
+
