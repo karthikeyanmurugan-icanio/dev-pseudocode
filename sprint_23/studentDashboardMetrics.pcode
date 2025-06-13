@@ -1,0 +1,30 @@
+create APi for show the student dashboard counts
+
+which return response of these counts
+    appliedCount: 0,
+    activeCount: 0,
+    rejectedCount: 0,
+    absentCount: 0,
+    intentToOfferCount: 0,
+    offerIssuedCount: 0,
+    offerAcceptedCount: 0,
+    offerRejectedCount: 0
+
+Process Flow
+
+Step 1 – Validate Required Payloads
+    Check if studentId is present
+        → If not, return: "studentId is required"
+
+Step 2 – Validate studentId
+    find the studentData using studentId
+    If !studentData:
+        → return : "Student not found" 
+
+Step 3 – pass into model funtion studentRoleMetrics(studentId)
+    raw query which give all the metrics using count function subQueries
+    return the result from the query
+    
+Step 4 – Return Response
+    On success, return the success response with assigned subscription details.
+
