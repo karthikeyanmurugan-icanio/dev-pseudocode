@@ -1,0 +1,79 @@
+📘 Process Flow: studentAppliedRoleList API
+
+Step 1 – Extract and Prepare Payload
+    - Extract studentId from req.params
+    - Extract search, filter, pageLimit, currentPage from req.query
+    - Calculate:
+        skip = (currentPage - 1) * pageLimit
+
+Step 2 – Define Status Filters
+    - Define statusMap for corporate roles:
+        statusMap = {
+            ACTIVE: [
+                "ACTIVE",
+                "HELD_TO_COMPARE",
+                "SHORTLISTED",
+                "SCHEDULED",
+                "SELECTED"
+            ]
+        }
+    - Compute:
+        corporateStatusArray ← values from statusMap[filter] OR [filter] if exists
+        instituteRoleStatusArray ← [filter] if filter exists and ≠ 'HELD_TO_COMPARE'
+
+Step 3 – Build Filter Conditions
+    - Initialize: orConditions = []
+    - If corporateStatusArray is not empty:
+        → Push corporate-specific filter condition into orConditions
+    - If instituteRoleStatusArray is not empty:
+        → Push institute-specific filter condition into orConditions
+
+Step 4 – Construct Main `where` Clause
+    - Base clause:
+        where = {
+            AND: [
+                { studentId },
+                { isApplied: 1 },
+                ...(orConditions if present)
+            ]
+        }
+    - If search exists:
+        → Add to where:
+            OR: [
+                {
+                    role: {
+                        tittle: {
+                            contains: search.trim(),
+                            mode: "insensitive"
+                        }
+                    }
+                }
+            ]
+
+Step 5 – Define Related Data to Include
+    - include = {
+        role: {
+            include: {
+                corporate: true,
+                company: true
+            }
+        }
+    }
+
+Step 6 – Query Execution
+    - Create new instance:
+        jobRoleStudentMap = new JobRoleStudentMap({ where, include, skip, take: pageLimit }, req)
+    - Fetch:
+        count = await jobRoleStudentMap.roleDocCount({ where })
+        await jobRoleStudentMap.getMany()
+
+Step 7 – Return Response
+    - On success:
+        → Return {
+            list: jobRoleStudentMap.data,
+            count,
+            currentPage: Number(currentPage),
+            totalPages: Math.ceil(count / pageLimit)
+        }
+    - On error:
+        → Log and return appropriate error response
