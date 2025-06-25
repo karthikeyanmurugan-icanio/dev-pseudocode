@@ -1,0 +1,78 @@
+Existing Method
+
+Step 1 – Initialize Eligibility Flags
+  Set isEligible = undefined
+  Set primarySkillIsEligible = true
+  Set secondarySkillIsEligible = true
+  Set otherMandatorySkillIsEligible = true
+
+Step 2 – Extract Required Skill Data
+  Get primarySkills from jobRoleData.mandatorySkills.primary
+  Get secondarySkills from jobRoleData.mandatorySkills.mandatory
+  Get mandatoryCount from jobRoleData.mandatorySkills.mandatoryCount
+  Get otherMandatorySkills from jobRoleData.mandatorySkills.otherSkills
+
+Step 3 – Check if there are any skill requirements
+  Check: hasNonEmptySkillSet = any item in otherMandatorySkills has non-empty skills list
+  IF primarySkills.skills is empty AND secondarySkills is empty AND hasNonEmptySkillSet is false:
+    → Set isEligible = true (No skill requirements to validate)
+
+ELSE:
+  Step 4 – Validate if candidate has any skills
+    IF candidate skills exist:
+      → Define helper: computeSkillAndOrIsEligible(skillSet)
+         IF skillSet.skills is not empty:
+           IF skillSet.type == "AND":
+             → Return true only if all skills in skillSet.skills exist in candidate's skills
+           ELSE ("OR"):
+             → Return true if any skill in skillSet.skills exists in candidate's skills
+         ELSE:
+           → Return true (nothing to validate)
+
+      Step 5 – Validate Primary Skills
+        → Apply computeSkillAndOrIsEligible(primarySkills)
+        → Set result to primarySkillIsEligible
+
+      Step 6 – Validate Secondary Skills
+        IF secondarySkills exist AND mandatoryCount is defined:
+          → Count how many secondarySkills exist in candidate's skills
+          → Set secondarySkillIsEligible = true if count >= mandatoryCount
+
+      Step 7 – Validate Other Mandatory Skill Sets
+        IF otherMandatorySkills exist:
+          → For each skillSet in otherMandatorySkills:
+             → Apply computeSkillAndOrIsEligible
+          → Set otherMandatorySkillIsEligible = true only if all return true
+
+      Step 8 – Final Eligibility Check
+        → Set isEligible = 
+              primarySkillIsEligible AND
+              secondarySkillIsEligible AND
+              otherMandatorySkillIsEligible
+
+    ELSE:
+      → Set isEligible = false (no skills provided by candidate)
+
+
+New Change
+
+Step 1 – Initialize Variables
+  Set isEligible = undefined
+  Get jobRoleSkills from jobRoleData.jobRoleSkills
+  Initialize empty list: mandatorySkillIds = []
+
+Step 2 – Extract Mandatory Skill IDs
+  IF jobRoleSkills exists:
+    FOR each skill in jobRoleSkills:
+      IF skill.isMandatory is true:
+        → Add skill.skillId to mandatorySkillIds list
+
+Step 3 – Check Eligibility Based on Mandatory Skills
+  IF mandatorySkillIds is empty:
+    → Set isEligible = true (no mandatory skills to validate)
+
+  ELSE:
+    → Set isEligible = true only if every ID in mandatorySkillIds is present in candidate’s skills array
+    (i.e., candidate must have all mandatory skills)
+
+    → If even one mandatory skill is missing, set isEligible = false
